@@ -1,0 +1,36 @@
+---
+
+version: "3"
+
+services:
+  db:
+    image: "postgres:alpine"
+    container_name: "db"
+    environment:
+      - POSTGRES_USER=relman
+      - POSTGRES_DB=relman
+    ports:
+      - 5432:5432
+    networks:
+      - relman_net
+
+  relman:
+    image: "wkda/relman"
+    privileged: true
+    container_name: "relman"
+    depends_on:
+      - db
+      - resource-git
+      - artifact-local
+    environment:
+      - RELMAN_DB_HOST=db
+      - RELMAN_DB_PORT=5432
+      - RELMAN_DB_USER=relman
+      - RELMAN_DB_NAME=relman
+    ports:
+      - "7777:7777"
+    networks:
+      - relman_net
+
+networks:
+  relman_net:
