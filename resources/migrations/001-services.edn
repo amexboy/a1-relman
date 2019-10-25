@@ -1,0 +1,5 @@
+{:up   ["CREATE TABLE \"services\" (\"name\"  TEXT PRIMARY KEY,
+                                     \"team\" VARCHAR(100) DEFAULT NULL,
+                                     \"slack-channel\" VARCHAR(100) DEFAULT NULL,
+                                     \"slack-group\" VARCHAR(100) DEFAULT NULL);"]
+ :down ["DROP TABLE \"services\";"]}
