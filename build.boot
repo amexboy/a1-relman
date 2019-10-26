@@ -11,6 +11,7 @@
                             [aleph "0.4.6"]
                             [ring "1.7.1"]
                             [ring/ring-json "0.5.0"]
+                            [cljstache "2.0.4"]
                             [compojure "1.6.1"]
                             [com.fasterxml.jackson.core/jackson-core "2.9.9"]
                             [failjure "1.5.0"]

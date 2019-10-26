@@ -8,6 +8,3 @@
    (when-not (pred)
      (throw (Exception. message)))))
 
-(defn subseq?
-  [s1 s2]
-  (s/subset? (set s1) (set s2)))

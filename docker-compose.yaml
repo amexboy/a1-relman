@@ -20,8 +20,6 @@ services:
     container_name: "relman"
     depends_on:
       - db
-      - resource-git
-      - artifact-local
     environment:
       - RELMAN_DB_HOST=db
       - RELMAN_DB_PORT=5432

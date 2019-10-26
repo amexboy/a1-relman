@@ -4,6 +4,7 @@
             [schema.core :as s]
             [relman.api.schemas :as schema]
             [relman.services.core :as services]
+            [relman.templates.core :as templates]
             [relman.util :as u]
             [relman.api.middleware :as m]))
 
@@ -22,16 +23,36 @@
     (rest/context "/api" []
       :tags ["Real Man"]
 
-      (rest/GET "/service" []
+      (rest/GET "/services" []
         :return schema/ServicesResponse
-        :summary "Returns the list of configured services"
+        :summary "Returns the list of configured servies"
         (services/get-services))
 
-      (rest/POST "/service" []
+      (rest/POST "/services" []
         :return schema/SimpleResponse
         :body [service schema/Service]
         (services/create service))
 
+      (rest/GET "/templates" []
+                :return schema/TemplatesResponse
+                (templates/get-templates))
+
+      (rest/POST "/templates" []
+                 :return schema/SimpleResponse
+                 :body [template schema/TemplateRequest]
+                 (templates/create template))
+
+      (rest/GET "/templates/:name/service/:service/args" []
+                :return schema/ArgsResponse
+                :path-params [name :- String
+                              service :- String]
+                (templates/args name service))
+
+      (rest/POST "/templates/:name/preview" []
+                :return schema/PreviewResponse
+                :body [request schema/PreviewRequest]
+                :path-params [name :- String]
+                (templates/preview name request))
 
     (rest/undocumented
      (route/not-found (u/respond "Took a wrong turn?")))))))

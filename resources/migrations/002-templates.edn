@@ -1,0 +1,5 @@
+{:up   ["CREATE TABLE \"templates\" (\"name\"  VARCHAR(100) PRIMARY KEY,
+                                     \"template\" TEXT NOT NULL,
+                                     \"required-args\" VARCHAR(255) DEFAULT '',
+                                     \"created-by\" VARCHAR(100) DEFAULT NULL)"]
+ :down ["DROP TABLE \"templates\";"]}
