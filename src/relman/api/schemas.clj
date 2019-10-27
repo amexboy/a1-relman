@@ -32,6 +32,7 @@
 (s/defschema TemplatesResponse (s/either SimpleResponse
                                          [Template]))
 
+(s/defschema SlackPayload {Keyword s/Any})
 
 (comment
   (s/validate ServicesResponse [{:name "refund-service"

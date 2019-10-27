@@ -54,5 +54,19 @@
                 :path-params [name :- String]
                 (templates/preview name request))
 
+      (rest/POST "/templates/:template/service/:service/request" []
+                 :return schema/SimpleResponse
+                 :body [request schema/PreviewRequest]
+                 :path-params [template :- String
+                               service :- String]
+                 (templates/request template service request))
+
+      (rest/POST "/slack"
+                 []
+                 :consumes ["application/x-www-form-urlencoded"]
+                 :return schema/SimpleResponse
+                 :form-params [payload :- String]
+                 (templates/slack-response payload))
+
     (rest/undocumented
      (route/not-found (u/respond "Took a wrong turn?")))))))

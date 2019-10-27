@@ -11,6 +11,8 @@
 (defonce db-port (Integer/parseInt (get env/env :relman-db-port "5432")))
 (defonce db-user (get env/env :relman-db-user "relman"))
 (defonce db-name (get env/env :relman-db-name "relman"))
+(defonce slack-auth {:api-url "https://slack.com/api"
+                           :token (get env/env :slack-token "fake-token")})
 
 (m/defstate data-source
   :start (let [data-source (h/make-datasource {:adapter            "postgresql"

@@ -1,0 +1,7 @@
+{:up   ["CREATE TABLE \"requests\" (\"id\"  SERIAL PRIMARY KEY,
+                                     \"template\" TEXT NOT NULL,
+                                     \"args\" JSON DEFAULT '{}',
+                                     \"request-for\" VARCHAR(100) DEFAULT NULL,
+                                     \"created-by\" VARCHAR(100) DEFAULT NULL,
+                                      \"status\"    VARCHAR(50) DEFAULT 'requested')"]
+ :down ["DROP TABLE \"requests\";"]}
