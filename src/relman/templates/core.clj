@@ -50,20 +50,25 @@
   [service]
   {:service service})
 
+(defn required-args
+  [template-name]
+  (d/let-flow [{:keys [required-args] :as template} (db/get-template
+                                                     states/db
+                                                     {:name template-name})
+               _ (log/debugf "Fetched required args %s" template)]
+              (if required-args
+                (str/split required-args #",")
+                [])))
+
 (defn args
   "Retrives the list of args"
   [name service]
   (d/let-flow [_ (log/debugf "Requesting args for %s and %s " name service)
-               {:keys [required-args] :as template} (db/get-template states/db {:name name})
-               _ (log/debugf "Fetched required args %s" template)
+               required-args (required-args name)
                defaults (fetch-data service)
                _ (log/debugf "Fetched defaults %s" defaults)]
-              (res/ok {
-                       :args (if required-args
-                               (str/split required-args #",")
-                               [])
-                       :defaults defaults
-                       })))
+              (res/ok {:args required-args
+                       :defaults defaults})))
 
 (defn format-template
   [template data]

@@ -4,6 +4,7 @@
             [schema.core :as s]
             [relman.api.schemas :as schema]
             [relman.services.core :as services]
+            [relman.slack.core :as slack]
             [relman.templates.core :as templates]
             [relman.util :as u]
             [relman.api.middleware :as m]))
@@ -67,6 +68,19 @@
                  :return schema/SimpleResponse
                  :form-params [payload :- String]
                  (templates/slack-response payload))
+
+      (rest/POST "/slack-command"
+                 []
+                 :consumes #{"application/x-www-form-urlencoded"}
+                 :return schema/SlackPayload
+                 :form-params [trigger_id     :- s/Any
+                               response_url   :- s/Any
+                               user_id        :- s/Any
+                               user_name      :- s/Any
+                               channel_name   :- s/Any
+                               text           :- s/Any
+                               command        :- s/Any]
+                 (slack/command trigger_id channel_name user_id user_name command text response_url))
 
     (rest/undocumented
      (route/not-found (u/respond "Took a wrong turn?")))))))
