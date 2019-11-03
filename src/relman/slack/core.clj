@@ -29,72 +29,132 @@
 
 (defn block-element
   [resolved-data parameter]
+  (log/debugf "Creating block element for %s" parameter)
   (let [param-keyword (keyword parameter)
-        list (get list-parameters param-keyword)
+        options (get list-parameters param-keyword)
         default-value (get resolved-data param-keyword)
         prompt (namify parameter)]
-    (if
-        (some? list) {:type "static_select",
-                      :placeholder
-                      {:type "plain_text"
-                       :text prompt
-                       :emoji true},
-                      :initial_option {:text {:type "plain_text"
-                                              :text default-value
-                                              :emoji true}
-                                       :valuea default-value
-                                       }
-                      :options (map (fn [i]
-                                      {:text {:type "plain_text"
-                                              :text i
-                                              :emoji true},
-                                       :value i}) list)}
-        {:type "input"
-         :label
-         {:type "plain_text"
-          :text prompt
-          :emoji true}
-         :element {:type "plain_text_input"
-                   :initial_value (get resolved-data param-keyword)
-                   :multiline (str/starts-with? parameter "{")}
-         :optional true})))
+    {:type "input"
+     :label
+     {:type "plain_text"
+      :text prompt
+      :emoji true}
+     :element (if (some? options)
+                (merge {:type "static_select"
+                        :placeholder
+                        {:type "plain_text"
+                         :text prompt
+                         :emoji true}
+                        :options        (map (fn [i]
+                                               {:text {:type "plain_text"
+                                                       :text i
+                                                       :emoji true},
+                                                :value i}) (options))}
+                       (when (some? default-value)
+                         {:initial_option {:text {:type "plain_text"
+                                                  :text default-value
+                                                  :emoji true}
+                                           :value default-value}}))
+                {:type "plain_text_input"
+                 :initial_value (str default-value)
+                 :multiline (str/starts-with? parameter "{")})}))
 
+(defn slack-send
+  [action request]
+  (let [token (:token states/slack-auth)
+        url   (str (:api-url states/slack-auth) "/" action)
+        headers {:Authorization (format "Bearer %s" token)
+                 :Content-Type "application/json"}
+        body   (json/generate-string request) ]
+    (client/post url {:headers headers
+                      :body body})))
+
+(defn slack-get-request
+  [action request]
+  (let [token (:token states/slack-auth)
+        url   (str (:api-url states/slack-auth) "/" action)
+        headers {:Authorization (format "Bearer %s" token)
+                 :Content-Type "application/x-www-form-urlencoded"}]
+    (client/get url {:headers headers
+                      :query-params request})))
+
+(defn slack-user-info
+  [user-id]
+  (let [response (slack-get-request "users.info" {:user user-id})]
+    (-> response
+        :body
+        (json/parse-string true)
+        :user
+        :profile)))
 
 (defn command
   [trigger-id response-url user-id user-name channel-name text command]
-  (f/try-all [; TODO: Add validation on text
-              text (f/assert-with some? text
-                                  "command text is required.\nTry /release_note template-name [service-name]")
-              [template-name service-name]  (str/split text #" ")
-              resolved-data (if (some? service-name)
-                             (templates/fetch-data service-name)
-                             {})
-              required-args @(templates/required-args template-name)
-              _  (log/debugf "Well, this are the required args %s" required-args)
-              form-elements (mapv (partial block-element resolved-data) required-args)
+  (-> command
+      (case
+          "/release_note" cmd-release-note
+          "/list"         cmd-list
+          :default        (fn [& _]
+                            (let [error (format "Invalid command %s" command)]
+                              (log/debug error)
+                              (res/ok {:response_type "ephemeral"
+                                       :text error}))))
+      (apply [trigger-id response-url user-id user-name channel-name text command])))
+
+(defn cmd-list
+  [trigger-id response-url user-id user-name channel-name text command])
+
+(defn- cmd-release-note
+  [trigger-id response-url user-id user-name channel-name text command]
+  (f/try-all [; TODO: Add more validation on text
+              template-name  (f/assert-with some? text
+                                            "command text is required.\nTry /release_note template-name [service-name]"))
+             resolved-data (if (some? service-name)
+                              (templates/fetch-data service-name)
+                              {})
+              args @(templates/required-args template-name)
+              form-elements (mapv (partial block-element resolved-data) args)
+              _  (log/debugf "Created form elements %s for %s" form-elements args)
+              display-name (-> (slack-user-info user-id)
+                               :display_name)
               text-blocks [{:type "section",
                             :text
                             {:type "plain_text",
                              :text
-                             (format ":wave: Hey <@%s>!\n\nPlease fill in the following form to request your release note" user-id)
+                             (format ":wave: Hey <@%s>\n\nPlease fill in the following form to request your release note" display-name)
                              :emoji true}}
                            {:type "divider"}]
               blocks (concat text-blocks form-elements)
               _  (log/debugf "Prepared blocks %s" blocks)
               request {:trigger_id trigger-id
-                       :blocks blocks}
-              _  (log/debugf "Prepared request %s" request)
-              _ (comment s-chat/post-message states/slack-auth channel-name "Does this matter" request)
-              ]
-             (res/ok request)
+                       :view {:type "modal"
+                              :title {:type "plain_text"
+                                      :text "New Release Note"
+                                      :emoji true}
+                              :submit {:type "plain_text"
+                                       :text "Submit :ethiopia_parrot:"
+                                       :emoji true}
+                              :close {:type "plain_text"
+                                      :text "Cancel :sad_parrot:"
+                                      :emoji true}
+                              :blocks blocks}}
+              _  (log/debugf "Prepared request to send to channel %s %s" channel-name request)
+              _  (slack-send "views.open" request)]
+             (res/ok {:response_type "ephemeral"
+                      :text "Pleae fill in the form displayed"})
              (f/when-failed [err]
                             (log/warn err)
                             (res/ok {:response_type "ephemeral"
                                      :text (f/message err)}))))
 
-(with-redefs-fn {#'templates/required-args (fn [_] (future ["hello" "world"]))}
-  #(-> (command "i" "i" "user-id" "" "" "text" "command")
-       (json/generate-string)))
+(comment
+  (with-redefs-fn {#'templates/required-args (fn [_] (future ["{hello" "epic" "epic" "jira" "{world"]))}
+    #(-> (command "i" "i" "user-id" "1" "1" "V-1.03" "/release_note")
+         (json/generate-string)))
+  (slack-user-info "UH1T18LAY")
+  (-> (command "12344" "https://hooks.slack.com/commands/T02CP6RJP/821561953958/8N7nWmOtC3wnmLwHTuZi9hAp" "12345" "amanu" "rel-man" "V-1.05" "/release_note")
+      (json/generate-string)
+      (log/debug)))
+
 
 (defn slack-response
   [payload]

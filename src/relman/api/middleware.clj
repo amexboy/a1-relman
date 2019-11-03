@@ -8,7 +8,7 @@
   as /status and /status/ are considered different."
   [handler]
   #(let [uri ^String (:uri %)]
-     (comment log/debugf "Request params %s " (if (some? (:body %)) (slurp (:body %))))
+     (comment log/debugf "Request params %s " (slurp (:body %)))
      (handler (assoc % :uri (if (and (not= "/" uri)
                                      (.endsWith uri "/"))
                               (subs uri 0 (dec (count uri)))

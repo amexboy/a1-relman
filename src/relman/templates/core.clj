@@ -34,7 +34,8 @@
   (d/let-flow [required-args (->> template
                                   (re-seq #"\{\{(\{?[a-zA-Z.]+)\}?\}\}")
                                   (mapv last)
-                                  (filter not-empty))
+                                  (filter not-empty)
+                                  set)
                entry {:name name
                       :template template
                       :required-args (str/join "," required-args)
@@ -182,3 +183,21 @@
                             (log/warnf "Error: %s" err)
                             (res/status "Failure" 500))))
 
+(comment
+
+
+
+  (create {:name "V-1.05" :template "
+<h1>Releasing {{service}}</h1>
+
+<p>Version: <strong>{{version}}</strong>
+<p>Down Time: <strong>{{downTime}}</strong>
+
+<h2>Release Details</h2>
+<p>Epic: <a href=\"http://wkda.atlassian.net/browse/{{epic}}\">{{epic}}</a>
+
+<h3>JIRA Tickets in this realease</h3>
+<p>{{{jiras}}}</p>
+
+<p>Thank you</p>
+"}))

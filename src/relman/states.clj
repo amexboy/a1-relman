@@ -12,7 +12,7 @@
 (defonce db-user (get env/env :relman-db-user "relman"))
 (defonce db-name (get env/env :relman-db-name "relman"))
 (defonce slack-auth {:api-url "https://slack.com/api"
-                           :token (get env/env :slack-token "fake-token")})
+                     :token (get env/env :slack-token "fake-token")})
 
 (m/defstate data-source
   :start (let [data-source (h/make-datasource {:adapter            "postgresql"
@@ -21,7 +21,8 @@
                                                :server-name        db-host
                                                :port-number        db-port
                                                :connection-timeout 5000})]
-           (defonce db {:datasource data-source})
+           (log/info "Connecting db")
+           (def db {:datasource data-source})
            data-source)
   :stop  (do (log/info "Stopping DB")
              (h/close-datasource data-source)))
@@ -43,8 +44,10 @@
              (docker/disconnect docker-conn)))
 
 (comment
-  (m/start)
+  (do
+    (m/stop)
+    (m/start)
+    )
 
-  (m/stop)
 
   (get env/env :java-home "No Java?!"))

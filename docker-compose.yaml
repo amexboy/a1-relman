@@ -5,7 +5,7 @@ version: "3"
 services:
   db:
     image: "postgres:alpine"
-    container_name: "db"
+    container_name: "relman-db"
     environment:
       - POSTGRES_USER=relman
       - POSTGRES_DB=relman

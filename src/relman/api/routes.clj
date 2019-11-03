@@ -6,7 +6,7 @@
             [relman.services.core :as services]
             [relman.slack.core :as slack]
             [relman.templates.core :as templates]
-            [relman.util :as u]
+            [ring.logger :as logger]         [relman.util :as u]
             [relman.api.middleware :as m]))
 
 (def relman-api
@@ -71,16 +71,21 @@
 
       (rest/POST "/slack-command"
                  []
+                 :middleware [logger/wrap-with-logger]
                  :consumes #{"application/x-www-form-urlencoded"}
                  :return schema/SlackPayload
                  :form-params [trigger_id     :- s/Any
+                               token          :- s/Any
+                               team_id        :- s/Any
                                response_url   :- s/Any
+                               team_domain    :- s/Any
                                user_id        :- s/Any
                                user_name      :- s/Any
+                               channel_id     :- s/Any
                                channel_name   :- s/Any
                                text           :- s/Any
                                command        :- s/Any]
-                 (slack/command trigger_id channel_name user_id user_name command text response_url))
+                 (slack/command trigger_id response_url user_id user_name channel_name text command))
 
     (rest/undocumented
      (route/not-found (u/respond "Took a wrong turn?")))))))
