@@ -6,7 +6,7 @@
             [relman.services.core :as services]
             [relman.slack.core :as slack]
             [relman.templates.core :as templates]
-            [ring.logger :as logger]         [relman.util :as u]
+            [relman.util :as u]
             [relman.api.middleware :as m]))
 
 (def relman-api
@@ -67,11 +67,10 @@
                  :consumes ["application/x-www-form-urlencoded"]
                  :return schema/SimpleResponse
                  :form-params [payload :- String]
-                 (templates/slack-response payload))
+                 (slack/slack-response payload))
 
       (rest/POST "/slack-command"
                  []
-                 :middleware [logger/wrap-with-logger]
                  :consumes #{"application/x-www-form-urlencoded"}
                  :return schema/SlackPayload
                  :form-params [trigger_id     :- s/Any

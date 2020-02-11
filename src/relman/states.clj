@@ -50,4 +50,7 @@
     )
 
 
-  (get env/env :java-home "No Java?!"))
+  (get env/env :java-home "No Java?!")
+  (defn restart []
+    (m/stop)
+    (m/start)))

@@ -153,35 +153,12 @@
               _ (log/debugf "Response %s" _)]
              (res/ok {:message "OK!"})
              (f/when-failed [err]
-                            (log/warnf "Failure happened %s" err)
+                            (log/warn err)
                             (res/status {:message "Failed "} 500))))
 
 (defn validate-user
   [username request-id]
   true)
-
-(defn slack-response
-  [payload]
-  ;; TODO: You need to check if the guy is allowed to approve
-  (f/try-all [{{user-id      :id
-                username     :username}   :user
-               {message-ts   :ts}         :message
-               {channel-name :name}       :channel
-               [{action-id   :action_id
-                 block-id    :block_id}]  :actions :as body} (-> payload
-                                                                 (codec/url-decode)
-                                                                 (json/parse-string true))
-              [action-type request-id] (str/split block-id #" ")
-              _                      (log/debugf "Approving reqeust %s by %s" request-id username)
-              response               (format "Request approved by <@%s>! Email will be sent" user-id)
-              data                   {:thread_ts message-ts}
-              _                     (if (validate-user username request-id)
-                                      (s-chat/post-message states/slack-auth
-                                                           channel-name response data))]
-             (res/ok {:message "Hola"})
-             (f/when-failed [err]
-                            (log/warnf "Error: %s" err)
-                            (res/status "Failure" 500))))
 
 (comment
 

@@ -1,7 +1,6 @@
 (ns relman.main
   (:require [mount.core :as m]
             [aleph.http :as http]
-            [ring.logger :as logger]
             [clojure.repl :as repl]
             [taoensso.timbre :as log]
             [relman.states :refer :all]
